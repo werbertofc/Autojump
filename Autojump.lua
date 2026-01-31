@@ -11,35 +11,35 @@ local AutoJumpEnabled = false -- Começa desligado
 local ScreenGui = Instance.new("ScreenGui")
 local MainButton = Instance.new("TextButton")
 local UICorner = Instance.new("UICorner")
+local StatusIndicator = Instance.new("Frame") -- Bolinha para indicar status
 
--- Tenta colocar no CoreGui (para executores) ou PlayerGui (para Studio)
+-- Tenta colocar no CoreGui (Executores) ou PlayerGui (Studio)
 if pcall(function() ScreenGui.Parent = CoreGui end) then
     ScreenGui.Parent = CoreGui
 else
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
-ScreenGui.Name = "AutoJumpUI"
-ScreenGui.ResetOnSpawn = false -- Mantém a GUI se você morrer
+ScreenGui.Name = "AutoJumpPro"
+ScreenGui.ResetOnSpawn = false 
 
--- Configuração do Botão
+-- Configuração do Botão (20x20)
 MainButton.Name = "ToggleJump"
 MainButton.Parent = ScreenGui
-MainButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Vermelho (Desligado)
-MainButton.Position = UDim2.new(0.5, -10, 0.5, -10) -- Centro da tela
-MainButton.Size = UDim2.new(0, 20, 0, 20) -- Tamanho 20x20 como solicitado
-MainButton.Text = "" -- Sem texto para ficar limpo (pode colocar "J" se quiser)
+MainButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Cinza escuro
+MainButton.Position = UDim2.new(0.8, 0, 0.7, 0) -- Perto dos botões de mobile
+MainButton.Size = UDim2.new(0, 40, 0, 40) -- Aumentei um pouco para facilitar o toque no celular (era 20, pus 40)
+MainButton.Text = "JUMP"
+MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainButton.TextSize = 10
 MainButton.AutoButtonColor = true
 
--- Arredondar os cantos (Opcional, fica mais bonito)
-UICorner.CornerRadius = UDim.new(1, 0) -- Deixa redondo (círculo)
+-- Deixa o botão redondo
+UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = MainButton
 
 -- Função de Arrastar (Móvel para qualquer parte)
-local dragging
-local dragInput
-local dragStart
-local startPos
+local dragging, dragInput, dragStart, startPos
 
 local function update(input)
     local delta = input.Position - dragStart
@@ -78,19 +78,24 @@ MainButton.MouseButton1Click:Connect(function()
     
     if AutoJumpEnabled then
         MainButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Verde (Ligado)
-        -- Feedback visual rápido (opcional)
-        print("Auto Jump: LIGADO")
+        MainButton.Text = "ON"
     else
         MainButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Vermelho (Desligado)
-        print("Auto Jump: DESLIGADO")
+        MainButton.Text = "OFF"
     end
 end)
 
--- Lógica do Auto Jump (Loop rápido)
-RunService.RenderStepped:Connect(function()
+-- Lógica FORÇADA de Pulo (Nova versão)
+RunService.Heartbeat:Connect(function()
     if AutoJumpEnabled and LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
+        
+        -- Verifica se o humanoide existe e se NÃO está no ar (para não bugar voando)
+        if humanoid and humanoid.FloorMaterial ~= Enum.Material.Air then
+            -- Método 1: Forçar Estado (Mais forte que apenas .Jump = true)
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            
+            -- Método 2: Backup (pressionar propriedade também)
             humanoid.Jump = true
         end
     end
